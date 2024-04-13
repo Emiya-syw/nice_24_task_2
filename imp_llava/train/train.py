@@ -19,7 +19,7 @@
 #    limitations under the License.
 
 
-import os, sys
+import os, sys, math
 local_rank = os.environ.get("LOCAL_RANK", None)
 
 if local_rank != "0" and local_rank is not None:
@@ -768,13 +768,22 @@ class DataCollatorForSupervisedDataset(object):
 
         return batch
 
+def split_list(lst, n):
+    """Split a list into n (roughly) equal-sized chunks"""
+    chunk_size = math.ceil(len(lst) / n)  # integer division
+    return [lst[i:i+chunk_size] for i in range(0, len(lst), chunk_size)]
+
+def get_chunk(lst, n, k):
+    chunks = split_list(lst, n)
+    return chunks[k]
 
 def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer,
-                                data_args) -> Dict:
+                                data_args, n, k) -> Dict:
     """Make dataset and collator for supervised fine-tuning."""
     train_dataset = LazySupervisedDataset(tokenizer=tokenizer,
                                 data_path=data_args.data_path,
                                 data_args=data_args)
+    train_dataset.list_data_dict = get_chunk(train_dataset.list_data_dict, n, k)
     data_collator = DataCollatorForSupervisedDataset(tokenizer=tokenizer)
     return dict(train_dataset=train_dataset,
                 eval_dataset=None,

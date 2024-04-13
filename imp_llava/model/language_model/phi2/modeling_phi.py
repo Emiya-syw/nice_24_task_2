@@ -823,7 +823,8 @@ class CausalLMLoss(nn.Module):
         super().__init__()
 
         self.shift_labels = shift_labels
-        self.loss_fct = nn.CrossEntropyLoss()
+        ###
+        self.loss_fct = nn.CrossEntropyLoss(reduction='none')
 
     def forward(self, logits: torch.FloatTensor, labels: torch.LongTensor) -> torch.FloatTensor:
         if self.shift_labels:
